@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+{% block page_title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Profile Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-custom mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="icon text-primary" style="font-size: 60px;">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h4>{{ student.user.get_full_name }}</h4>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-id-card me-2"></i>Roll Number: {{ student.roll_number }}
+                                <span class="ms-3"><i class="fas fa-hashtag me-2"></i>Registration: {{ student.registration_number }}</span>
+                                <span class="ms-3"><i class="fas fa-layer-group me-2"></i>Semester: {{ student.current_semester }}</span>
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-users me-2"></i>Section: {{ student.section }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overall Attendance -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon {% if overall_percentage >= 75 %}text-success{% else %}text-danger{% endif %}">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <h3>{{ overall_percentage }}%</h3>
+                <p>Overall Attendance</p>
+                {% if is_defaulter %}
+                    <span class="badge bg-danger">Below 75%</span>
+                {% else %}
+                    <span class="badge bg-success">Above 75%</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon text-primary">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3>{{ total_attended }}</h3>
+                <p>Classes Attended</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon text-info">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <h3>{{ total_classes }}</h3>
+                <p>Total Classes</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Alert -->
+    {% if is_defaulter %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-danger alert-custom" role="alert">
+                <h5 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Low Attendance Alert!
+                </h5>
+                <p class="mb-0">Your overall attendance is below 75%. Please improve your attendance to meet the minimum requirement.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Subject-wise Attendance -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Subject-wise Attendance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Code</th>
+                                    <th>Total Classes</th>
+                                    <th>Attended</th>
+                                    <th>Percentage</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for summary in summaries %}
+                                <tr>
+                                    <td>{{ summary.subject.name }}</td>
+                                    <td>{{ summary.subject.code }}</td>
+                                    <td>{{ summary.total_classes }}</td>
+                                    <td>{{ summary.classes_attended }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 25px;">
+                                            <div class="progress-bar {% if summary.attendance_percentage >= 75 %}bg-success{% else %}bg-danger{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ summary.attendance_percentage }}%;" 
+                                                 aria-valuenow="{{ summary.attendance_percentage }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ summary.attendance_percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if summary.attendance_percentage >= 75 %}
+                                            <span class="badge bg-success">Good</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Low</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No attendance records found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Attendance -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Today's Attendance</h5>
+                </div>
+                <div class="card-body">
+                    {% if today_attendance %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Period</th>
+                                        <th>Subject</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attendance in today_attendance %}
+                                    <tr>
+                                        <td>Period {{ attendance.timetable.period_number }}</td>
+                                        <td>{{ attendance.timetable.subject_assignment.subject.name }}</td>
+                                        <td>{{ attendance.timetable.start_time|time:"h:i A" }} - {{ attendance.timetable.end_time|time:"h:i A" }}</td>
+                                        <td>
+                                            {% if attendance.status == 'present' %}
+                                                <span class="badge bg-success">Present</span>
+                                            {% elif attendance.status == 'absent' %}
+                                                <span class="badge bg-danger">Absent</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Late</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No attendance marked for today yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-body text-center">
+                    <a href="{% url 'view_my_attendance' %}" class="btn btn-primary btn-custom me-2">
+                        <i class="fas fa-list me-2"></i>View Detailed Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

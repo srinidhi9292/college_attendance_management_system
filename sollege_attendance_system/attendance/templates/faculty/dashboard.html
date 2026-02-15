@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Dashboard - College Attendance System{% endblock %}
+{% block page_title %}Faculty Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div style="font-size: 80px; color: #3498db;">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h3 class="mb-2">Welcome, {{ faculty.user.get_full_name }}!</h3>
+                            <p class="mb-1">
+                                <i class="fas fa-id-badge text-primary me-2"></i>
+                                <strong>Employee ID:</strong> {{ faculty.employee_id }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-building text-success me-2"></i>
+                                <strong>Department:</strong> {{ faculty.department.name }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-user-tie text-info me-2"></i>
+                                <strong>Designation:</strong> {{ faculty.designation }}
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-graduation-cap text-warning me-2"></i>
+                                <strong>Qualification:</strong> {{ faculty.qualification }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="stat-card text-center">
+                <div class="icon text-primary">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h3 class="mb-0">{{ total_assignments }}</h3>
+                <p class="mb-0">Assigned Subjects</p>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="stat-card text-center">
+                <div class="icon text-success">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <h3 class="mb-0">{{ today_classes.count }}</h3>
+                <p class="mb-0">Classes Today</p>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="stat-card text-center bg-gradient-info text-white">
+                <div class="icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h3 class="mb-0 text-white">View Attendance Record</h3>
+                <a href="{% url 'view_attendance_records' %}" class="btn btn-light btn-sm mt-2">
+                    <i class="fas fa-eye me-1"></i>View All
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Classes -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card card-custom">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Today's Classes - {{ "now"|date:"l, d F Y" }}
+                    </h5>
+                    <span class="badge bg-white text-primary">{{ today_classes.count }} Classes</span>
+                </div>
+                <div class="card-body">
+                    {% if today_classes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 10%;">Period</th>
+                                        <th style="width: 20%;">Time</th>
+                                        <th style="width: 25%;">Subject</th>
+                                        <th style="width: 15%;">Section</th>
+                                        <th style="width: 10%;">Room</th>
+                                        <th style="width: 10%;">Status</th>
+                                        <th style="width: 10%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for class in today_classes %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary" style="font-size: 1rem;">
+                                                P{{ class.period_number }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-clock text-info me-1"></i>
+                                            <strong>{{ class.start_time|time:"h:i A" }}</strong> - {{ class.end_time|time:"h:i A" }}
+                                        </td>
+                                        <td>
+                                            <strong>{{ class.subject_assignment.subject.name }}</strong><br>
+                                            <small class="text-muted">{{ class.subject_assignment.subject.code }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ class.subject_assignment.section }}</span>
+                                        </td>
+                                        <td>
+                                            {% if class.room_number %}
+                                                <i class="fas fa-door-open me-1"></i>{{ class.room_number }}
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if class.is_attendance_allowed %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-unlock me-1"></i>Available
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-lock me-1"></i>Locked
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'mark_attendance' class.id %}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check me-1"></i>Mark
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Time Reference -->
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> Attendance can be marked or modified at any time
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Classes Scheduled Today</h5>
+                            <p class="text-muted">You don't have any classes scheduled for {{ "now"|date:"l, d F Y" }}</p>
+                            
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Subjects -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book-reader me-2"></i>Your Assigned Subjects
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if assignments %}
+                        <div class="row">
+                            {% for assignment in assignments %}
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="card h-100 border-left-primary">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-primary">
+                                            <i class="fas fa-book me-2"></i>{{ assignment.subject.name }}
+                                        </h6>
+                                        <hr>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-code me-1"></i>
+                                                <strong>Code:</strong> {{ assignment.subject.code }}
+                                            </small>
+                                        </p>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-users me-1"></i>
+                                                <strong>Section:</strong> {{ assignment.section }}
+                                            </small>
+                                        </p>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-layer-group me-1"></i>
+                                                <strong>Semester:</strong> {{ assignment.subject.semester }}
+                                            </small>
+                                        </p>
+                                        <p class="card-text mb-3">
+                                            <span class="badge bg-primary">{{ assignment.subject.credits }} Credits</span>
+                                            {% if assignment.subject.subject_type == 'theory' %}
+                                                <span class="badge bg-info">Theory</span>
+                                            {% elif assignment.subject.subject_type == 'practical' %}
+                                                <span class="badge bg-warning">Practical</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Both</span>
+                                            {% endif %}
+                                        </p>
+                                        <a href="{% url 'view_attendance_records' %}?assignment={{ assignment.id }}" 
+                                           class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="fas fa-eye me-1"></i>View Attendance
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Subjects Assigned</h5>
+                            <p class="text-muted">You don't have any subjects assigned yet. Please contact the administrator.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'view_attendance_records' %}" 
+                               class="btn btn-outline-primary btn-custom w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                                <span>View Reports</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'faculty_weekly_schedule' %}" 
+                                class="btn btn-outline-success btn-custom w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-calendar-week fa-2x mb-2"></i>
+                                <span>Week Schedule</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'view_attendance_records' %}" 
+                               class="btn btn-outline-warning btn-custom w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-download fa-2x mb-2"></i>
+                                <span>Download Reports</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'faculty_profile' %}" 
+                               class="btn btn-outline-info btn-custom w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <i class="fas fa-user-cog fa-2x mb-2"></i>
+                                <span>Profile Settings</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #3498db;
+}
+
+.border-left-warning {
+    border-left: 4px solid #f39c12;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+</style>
+
+<script>
+// Auto-refresh every 5 minutes to update class status
+setTimeout(function() {
+    location.reload();
+}, 300000);
+
+// Highlight current time period
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    document.querySelectorAll('tbody tr').forEach(function(row) {
+        const timeCell = row.cells[1].textContent;
+        // Add highlighting logic if needed
+    });
+});
+</script>
+{% endblock %}
