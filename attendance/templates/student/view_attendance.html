@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance{% endblock %}
+{% block page_title %}My Attendance Records{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Subject-wise Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Subject Code</th>
+                                    <th>Subject Name</th>
+                                    <th>Total Classes</th>
+                                    <th>Attended</th>
+                                    <th>Attendance Percentage</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for summary in summaries %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ summary.subject.code }}</td>
+                                    <td>{{ summary.subject.name }}</td>
+                                    <td>{{ summary.total_classes }}</td>
+                                    <td>{{ summary.classes_attended }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if summary.attendance_percentage >= 75 %}bg-success{% elif summary.attendance_percentage >= 65 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ summary.attendance_percentage }}%" 
+                                                 aria-valuenow="{{ summary.attendance_percentage }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                <strong>{{ summary.attendance_percentage }}%</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if summary.attendance_percentage >= 75 %}
+                                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Good</span>
+                                        {% elif summary.attendance_percentage >= 65 %}
+                                            <span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Warning</span>
+                                        {% else %}
+                                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Low</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="?subject={{ summary.subject.id }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye me-1"></i>Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                                        No attendance records found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_subject %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Detailed Attendance - {{ selected_subject.name }}</h5>
+                    <a href="{% url 'view_my_attendance' %}" class="btn btn-sm btn-light">
+                        <i class="fas fa-arrow-left me-1"></i>Back
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Period</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Marked By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in detailed_attendance %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ attendance.date|date:"d M Y" }}</td>
+                                    <td>{{ attendance.timetable.get_day_of_week_display }}</td>
+                                    <td>Period {{ attendance.timetable.period_number }}</td>
+                                    <td>{{ attendance.timetable.start_time|time:"H:i" }} - {{ attendance.timetable.end_time|time:"H:i" }}</td>
+                                    <td>
+                                        {% if attendance.status == 'present' %}
+                                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Present</span>
+                                        {% elif attendance.status == 'absent' %}
+                                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Absent</span>
+                                        {% else %}
+                                            <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Late</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attendance.marked_by.user.get_full_name }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No attendance records found for this subject.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if summaries %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card card-custom border-left-warning">
+                <div class="card-body">
+                    <h6 class="text-warning"><i class="fas fa-lightbulb me-2"></i>Attendance Tips</h6>
+                    <ul class="mb-0">
+                        <li>Maintain at least <strong>75% attendance</strong> in all subjects.</li>
+                        <li>Regular attendance helps in better understanding and academic success.</li>
+                        <li>If your attendance falls below 75%, focus on attending all upcoming classes.</li>
+                        <li>Medical leave requires proper documentation - submit to your HOD.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="card card-custom mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Attendance Calculator</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Subject</label>
+                            <select class="form-control" id="calcSubject" onchange="calculateImprovement()">
+                                <option value="">-- Select Subject --</option>
+                                {% for summary in summaries %}
+                                <option value="{{ summary.id }}" 
+                                        data-total="{{ summary.total_classes }}" 
+                                        data-attended="{{ summary.classes_attended }}"
+                                        data-percentage="{{ summary.attendance_percentage }}">
+                                    {{ summary.subject.name }} ({{ summary.attendance_percentage }}%)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Target Percentage</label>
+                            <input type="number" class="form-control" id="targetPercentage" value="75" min="0" max="100" oninput="calculateImprovement()">
+                        </div>
+                    </div>
+                    <div id="calculationResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.border-left-warning {
+    border-left: 4px solid #f39c12;
+}
+</style>
+
+<script>
+function calculateImprovement() {
+    const select = document.getElementById('calcSubject');
+    const target = parseFloat(document.getElementById('targetPercentage').value);
+    const result = document.getElementById('calculationResult');
+
+    if (!select.value || !target) {
+        result.innerHTML = "";
+        return;
+    }
+
+    const option = select.options[select.selectedIndex];
+    const total = parseInt(option.dataset.total);
+    const attended = parseInt(option.dataset.attended);
+    const current = parseFloat(option.dataset.percentage);
+
+    if (current >= target) {
+        result.innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                Your current attendance (${current}%) already meets the target of ${target}%.
+                Keep maintaining good attendance!
+            </div>`;
+        return;
+    }
+
+    // Calculate classes needed
+    let classesNeeded = 0;
+    let futureTotal = total;
+    let futureAttended = attended;
+
+    while (((futureAttended / futureTotal) * 100) < target && classesNeeded < 100) {
+        futureTotal++;
+        futureAttended++;
+        classesNeeded++;
+    }
+
+    result.innerHTML = `
+        <div class="alert alert-info">
+            <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Analysis:</h6>
+            <ul class="mb-0">
+                <li>Current Attendance: <strong>${current}%</strong></li>
+                <li>Target Attendance: <strong>${target}%</strong></li>
+                <li>Classes attended: <strong>${attended}/${total}</strong></li>
+                <li><strong>You need to attend ${classesNeeded}</strong> consecutive classes to reach your target.</li>
+                <li>After attending ${classesNeeded} classes: <strong>${futureAttended}/${futureTotal} (${((futureAttended / futureTotal) * 100).toFixed(1)}%)</strong></li>
+            </ul>
+        </div>`;
+}
+</script>
+{% endblock %}
